@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"nep/utils"
 	"os"
@@ -69,33 +68,11 @@ var listCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		// Write to file if file flag is set
-		if file != "" {
-			f, err := os.Create(file)
-			if err != nil {
-				fmt.Printf("Error creating file: %v\n", err)
-				os.Exit(1)
-			}
-			defer f.Close()
-
-			encoder := json.NewEncoder(f)
-			encoder.SetIndent("", "  ")
-			err = encoder.Encode(dependencies)
-			if err != nil {
-				fmt.Printf("Error writing to file: %v\n", err)
-				os.Exit(1)
-			}
-
-			if verbose {
-				fmt.Printf("Wrote package list to file: %s\n", file)
-			}
-		}
 	},
 }
 
 func init() {
 	listCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose output")
 	listCmd.Flags().StringVarP(&path, "path", "p", "", "Set project path")
-	listCmd.Flags().StringVarP(&file, "file", "f", "", "Set output file name")
 	rootCmd.AddCommand(listCmd)
 }

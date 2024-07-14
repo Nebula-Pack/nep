@@ -63,6 +63,62 @@ var installCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
+		if len(args) == 0 {
+			if verbose {
+				fmt.Println("No arguments provided, checking dependencies...")
+			}
+
+			// Use ReadConfig to get the dependencies
+			results, err := utils.ReadConfig(projectPath, [][]string{{"dependencies"}})
+			if err != nil {
+				fmt.Printf("Error: Failed to read dependencies from config: %v\n", err)
+				os.Exit(1)
+			}
+
+			if len(results) == 0 || results[0] == nil {
+				if verbose {
+					fmt.Println("No dependencies found in config")
+				}
+				return
+			}
+
+			// Assert and convert the result to map[string]interface{}
+			dependenciesInterface, ok := results[0].(map[string]interface{})
+			if !ok {
+				fmt.Println("Error: Dependencies in config are not in the expected format")
+				os.Exit(1)
+			}
+
+			if verbose {
+				fmt.Printf("Dependencies found in config: %v\n", dependenciesInterface)
+			}
+
+			// Convert to args format
+			for pkg, version := range dependenciesInterface {
+				versionStr, ok := version.(string)
+				if !ok {
+					fmt.Printf("Warning: Invalid version format for dependency %s: %v\n", pkg, version)
+					continue
+				}
+				// Remove 'v' prefix if it exists
+				versionStr = strings.TrimPrefix(versionStr, "v")
+				newArg := fmt.Sprintf("%s::%s", pkg, versionStr)
+				args = append(args, newArg)
+				if verbose {
+					fmt.Printf("Added dependency to install: %s\n", newArg)
+				}
+			}
+
+			if verbose {
+				fmt.Printf("Dependencies to install: %v\n", args)
+			}
+
+			if len(args) == 0 {
+				fmt.Println("No valid dependencies found to install")
+				return
+			}
+		}
+
 		if asynchronous {
 			var wg sync.WaitGroup
 			for _, pkg := range args {

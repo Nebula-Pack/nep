@@ -4,7 +4,7 @@
   "author": "Default Author",
   "version": "1.0.0",
   "license": "MIT",
-  "dependencies": {},
+  "dependencies": { "luasocket": "2.0.2" },
   "scripts": {},
   "main": "main.lua"
 }

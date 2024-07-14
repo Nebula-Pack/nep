@@ -90,7 +90,6 @@ func UpdateConfig(projectDir string, updates []UpdatePath) error {
 	return nil
 }
 
-// nestedUpdate updates nested keys in a map
 func nestedUpdate(config map[string]interface{}, keys []string, value interface{}) {
 	lastKey := keys[len(keys)-1]
 	m := config
@@ -101,7 +100,12 @@ func nestedUpdate(config map[string]interface{}, keys []string, value interface{
 		}
 		m = m[k].(map[string]interface{})
 	}
-	m[lastKey] = value
+
+	if value == configs.RemoveMarker {
+		delete(m, lastKey)
+	} else {
+		m[lastKey] = value
+	}
 }
 
 // FindProjectDir checks if the current directory or any parent directory is a project directory

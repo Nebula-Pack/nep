@@ -9,6 +9,8 @@ const (
 	FolderName       string = "nebpack"
 	DefaultName      string = "Nebula-Pack-Project"
 	ResponseFileName string = "nebula-config"
+	RemoveMarker     string = "__REMOVE__"
+	All              string = "*"
 )
 
 //go:embed project_config.json
