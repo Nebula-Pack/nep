@@ -14,15 +14,8 @@ var listCmd = &cobra.Command{
 	Short:   "List packages",
 	Run: func(cmd *cobra.Command, args []string) {
 		// Change working directory if path is set
-		if path != "" {
-			err := os.Chdir(path)
-			if err != nil {
-				fmt.Printf("Error changing directory: %v\n", err)
-				os.Exit(1)
-			}
-			if verbose {
-				fmt.Printf("Changed working directory to: %s\n", path)
-			}
+		if err := changeDirectory(); err != nil {
+			exitWithError(err)
 		}
 
 		projectPath, err := utils.FindProjectDir()

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -10,6 +11,18 @@ var (
 	verbose bool
 	path    string
 )
+
+func changeDirectory() error {
+	if path != "" {
+		if err := os.Chdir(path); err != nil {
+			return fmt.Errorf("error changing directory: %v", err)
+		}
+		if verbose {
+			fmt.Printf("Changed working directory to: %s\n", path)
+		}
+	}
+	return nil
+}
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{

@@ -17,16 +17,9 @@ var updateCmd = &cobra.Command{
 	Aliases: []string{"up"},
 	Short:   "update packages",
 	Run: func(cmd *cobra.Command, args []string) {
-		// Change working directory if path is set
-		if path != "" {
-			err := os.Chdir(path)
-			if err != nil {
-				fmt.Printf("Error changing directory: %v\n", err)
-				os.Exit(1)
-			}
-			if verbose {
-				fmt.Printf("Changed working directory to: %s\n", path)
-			}
+
+		if err := changeDirectory(); err != nil {
+			exitWithError(err)
 		}
 
 		projectPath, err := utils.FindProjectDir()
@@ -48,6 +41,11 @@ var updateCmd = &cobra.Command{
 			}
 			updateSpecificPackages(args, cachePath, packagePath)
 		}
+
+		if err = os.Remove(cachePath); err != nil {
+			fmt.Printf("Error removing cache folder: %v\n", err)
+		}
+
 	},
 }
 

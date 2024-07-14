@@ -44,18 +44,6 @@ func runUninstall(cmd *cobra.Command, args []string) {
 	fmt.Println("Packages uninstalled successfully.")
 }
 
-func changeDirectory() error {
-	if path != "" {
-		if err := os.Chdir(path); err != nil {
-			return fmt.Errorf("error changing directory: %v", err)
-		}
-		if verbose {
-			fmt.Printf("Changed working directory to: %s\n", path)
-		}
-	}
-	return nil
-}
-
 func getUpdates(projectPath string, args []string) ([]utils.UpdatePath, error) {
 	var updates []utils.UpdatePath
 
