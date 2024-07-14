@@ -1,0 +1,10 @@
+{
+  "name": "Nebula-Pack-Project",
+  "description": "The Best",
+  "author": "Default Author",
+  "version": "1.0.0",
+  "license": "MIT",
+  "dependencies": {},
+  "scripts": {},
+  "main": "main.lua"
+}

@@ -1,0 +1,126 @@
+package utils
+
+import (
+	_ "embed"
+	"encoding/json"
+	"fmt"
+	"nep/configs"
+	"os"
+	"path/filepath"
+)
+
+// CreateProject creates a new project directory with nebpack folder and nebula-config.json file
+func CreateProject(projectName string, useCurrentDir bool) (string, error) {
+	var projectDir string
+	var err error
+
+	if useCurrentDir {
+		projectDir, err = os.Getwd()
+		if err != nil {
+			return "", fmt.Errorf("failed to get current directory: %v", err)
+		}
+	} else {
+		if projectName == "" {
+			return "", fmt.Errorf("project name cannot be empty")
+		}
+		projectDir = filepath.Join(".", projectName)
+		err = os.Mkdir(projectDir, 0755)
+		if err != nil {
+			return "", fmt.Errorf("failed to create project directory: %v", err)
+		}
+	}
+
+	// Create nebpack directory
+	nebpackDir := filepath.Join(projectDir, configs.FolderName)
+	err = os.Mkdir(nebpackDir, 0755)
+	if err != nil {
+		return "", fmt.Errorf("failed to create %s directory: %v", configs.JSONName, err)
+	}
+
+	// Create nebula-config.json file
+	configFilePath := filepath.Join(projectDir, configs.JSONName+".json")
+	err = os.WriteFile(configFilePath, configs.ConfigFileBytes, 0644)
+	if err != nil {
+		return "", fmt.Errorf("failed to write to nebula-config.json: %v", err)
+	}
+
+	return projectDir, nil
+}
+
+// UpdatePath represents a path in the JSON structure and the value to set
+type UpdatePath struct {
+	Path  []string
+	Value interface{}
+}
+
+// UpdateConfig updates the nebula-config.json file with the given key-value pairs.
+func UpdateConfig(projectDir string, updates []UpdatePath) error {
+	configFilePath := filepath.Join(projectDir, configs.JSONName+".json")
+
+	// Read the existing config file
+	configFileBytes, err := os.ReadFile(configFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to read config file: %v", err)
+	}
+
+	// Parse the JSON content
+	var config map[string]interface{}
+	err = json.Unmarshal(configFileBytes, &config)
+	if err != nil {
+		return fmt.Errorf("failed to parse config file: %v", err)
+	}
+
+	// Update the config with the new values
+	for _, update := range updates {
+		nestedUpdate(config, update.Path, update.Value)
+	}
+
+	// Convert the updated config back to JSON
+	updatedConfigBytes, err := json.MarshalIndent(config, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal updated config: %v", err)
+	}
+
+	// Write the updated config back to the file
+	err = os.WriteFile(configFilePath, updatedConfigBytes, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to write updated config file: %v", err)
+	}
+
+	return nil
+}
+
+// nestedUpdate updates nested keys in a map
+func nestedUpdate(config map[string]interface{}, keys []string, value interface{}) {
+	lastKey := keys[len(keys)-1]
+	m := config
+
+	for _, k := range keys[:len(keys)-1] {
+		if _, ok := m[k].(map[string]interface{}); !ok {
+			m[k] = make(map[string]interface{})
+		}
+		m = m[k].(map[string]interface{})
+	}
+	m[lastKey] = value
+}
+
+// FindProjectDir checks if the current directory or any parent directory is a project directory
+func FindProjectDir() (string, error) {
+	dir, err := os.Getwd()
+	if err != nil {
+		return "", fmt.Errorf("failed to get current directory: %v", err)
+	}
+
+	for {
+		configFilePath := filepath.Join(dir, configs.JSONName+".json")
+		if _, err := os.Stat(configFilePath); err == nil {
+			return dir, nil
+		}
+
+		parentDir := filepath.Dir(dir)
+		if parentDir == dir {
+			return "", fmt.Errorf("no project directory found")
+		}
+		dir = parentDir
+	}
+}
