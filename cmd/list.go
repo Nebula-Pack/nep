@@ -3,26 +3,65 @@ package cmd
 import (
 	"fmt"
 	"nep/utils"
+	"os"
 
 	"github.com/spf13/cobra"
 )
-
-//work in progress
 
 var listCmd = &cobra.Command{
 	Use:     "list",
 	Aliases: []string{"ls"},
 	Short:   "List packages",
 	Run: func(cmd *cobra.Command, args []string) {
-		headers := []string{"Name", "Age", "City"}
-		rows := [][]string{
-			{"Alice", "30", "New York"},
-			{"Bob", "25", "San Francisco"},
-			{"Charlie", "35", "London"},
+		// Change working directory if path is set
+		if path != "" {
+			err := os.Chdir(path)
+			if err != nil {
+				fmt.Printf("Error changing directory: %v\n", err)
+				os.Exit(1)
+			}
+			if verbose {
+				fmt.Printf("Changed working directory to: %s\n", path)
+			}
 		}
 
-		tableString := utils.DisplayTable(headers, rows)
-		fmt.Println(tableString)
+		projectPath, err := utils.FindProjectDir()
+		if err != nil {
+			fmt.Printf("Error finding project directory: %v\n", err)
+			os.Exit(1)
+		}
+
+		keys := [][]string{
+			{"dependencies"},
+		}
+
+		results, err := utils.ReadConfig(projectPath, keys)
+		if err != nil {
+			fmt.Printf("Error reading config: %v\n", err)
+			os.Exit(1)
+		}
+
+		// Convert the result to [][]string
+		rows := [][]string{}
+		if len(results) > 0 {
+			dependencies, ok := results[0].(map[string]interface{})
+			if !ok {
+				fmt.Println("Error: dependencies are not in the expected format")
+				os.Exit(1)
+			}
+
+			for pkg, version := range dependencies {
+				rows = append(rows, []string{pkg, fmt.Sprintf("%v", version)})
+			}
+		}
+
+		headers := []string{"Package", "Version"}
+
+		err = utils.DisplayTable(headers, rows)
+		if err != nil {
+			fmt.Printf("Error displaying table: %v\n", err)
+			os.Exit(1)
+		}
 	},
 }
 

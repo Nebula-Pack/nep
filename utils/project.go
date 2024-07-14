@@ -124,3 +124,53 @@ func FindProjectDir() (string, error) {
 		dir = parentDir
 	}
 }
+
+// ReadConfig reads values from the nebula-config.json file based on the given paths.
+func ReadConfig(projectDir string, paths [][]string) ([]interface{}, error) {
+	configFilePath := filepath.Join(projectDir, configs.JSONName+".json")
+
+	// Read the existing config file
+	configFileBytes, err := os.ReadFile(configFilePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read config file: %v", err)
+	}
+
+	// Parse the JSON content
+	var config map[string]interface{}
+	err = json.Unmarshal(configFileBytes, &config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse config file: %v", err)
+	}
+
+	// Read the values based on the provided paths
+	results := make([]interface{}, len(paths))
+	for i, path := range paths {
+		value, err := nestedRead(config, path)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read path %v: %v", path, err)
+		}
+		results[i] = value
+	}
+
+	return results, nil
+}
+
+// nestedRead reads a nested value from a map based on the given keys
+func nestedRead(config map[string]interface{}, keys []string) (interface{}, error) {
+	var current interface{} = config
+
+	for _, key := range keys {
+		switch v := current.(type) {
+		case map[string]interface{}:
+			var ok bool
+			current, ok = v[key]
+			if !ok {
+				return nil, fmt.Errorf("key not found: %s", key)
+			}
+		default:
+			return nil, fmt.Errorf("invalid path: %v", keys)
+		}
+	}
+
+	return current, nil
+}
