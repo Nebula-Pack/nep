@@ -124,8 +124,17 @@ func installPackage(pkg, projectPath, folderPath string) {
 
 	fmt.Printf("Successfully cloned %s into %s\n", pkg, packageDir)
 
+	name := ""
+
+	if responseData.Key == "" {
+		name = packageName
+	} else {
+
+		name = responseData.Key
+	}
+
 	updates := []utils.UpdatePath{
-		{Path: []string{"dependencies", responseData.Key}, Value: responseData.Data.Version},
+		{Path: []string{"dependencies", name}, Value: responseData.Data.Version},
 	}
 
 	// Use mutex to lock access to the config file during updates

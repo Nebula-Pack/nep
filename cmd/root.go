@@ -9,6 +9,7 @@ import (
 var (
 	verbose bool
 	path    string
+	file    string
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -51,6 +52,7 @@ func init() {
 
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Show additional information")
 	rootCmd.PersistentFlags().StringVarP(&path, "path", "p", "", "Set project path")
+	rootCmd.PersistentFlags().StringVarP(&file, "file", "f", "", "Set project file")
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
