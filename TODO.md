@@ -1,8 +1,8 @@
 - [ ] search
-- [ ] list
+- [x] list
 - [ ] build
-- [ ] uninstall
+- [x] uninstall
 - [ ] update comments and readmes
-- [ ] install
-- [ ] init
+- [x] install
+- [x] init
 - [ ] clean

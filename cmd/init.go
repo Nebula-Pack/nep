@@ -68,7 +68,8 @@ var initCmd = &cobra.Command{
 			} else if len(args) > 0 {
 				projectName = args[0]
 			} else {
-				projectName = "Nebula-Pack-Project"
+				projectName = configs.DefaultName
+
 			}
 		}
 		dir, err := utils.CreateProject(projectName, useCurrentDir)

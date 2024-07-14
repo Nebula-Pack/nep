@@ -7,6 +7,7 @@ import (
 const (
 	JSONName         string = "nebula-config"
 	FolderName       string = "nebpack"
+	CacheFolderName  string = "nebpack-cache"
 	DefaultName      string = "Nebula-Pack-Project"
 	ResponseFileName string = "nebula-config"
 	RemoveMarker     string = "__REMOVE__"
