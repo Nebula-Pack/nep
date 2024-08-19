@@ -19,18 +19,12 @@ var uninstallCmd = &cobra.Command{
 }
 
 func runUninstall(cmd *cobra.Command, args []string) {
-	if err := changeDirectory(); err != nil {
-		exitWithError(err)
-	}
 
 	if len(args) == 0 {
 		exitWithError(fmt.Errorf("no packages specified"))
 	}
 
-	projectPath, err := utils.FindProjectDir()
-	if err != nil {
-		exitWithError(err)
-	}
+	projectPath := utils.Prepare(false, path)
 
 	updates, err := getUpdates(projectPath, args)
 	if err != nil {
@@ -96,7 +90,6 @@ func exitWithError(err error) {
 }
 
 func init() {
-	uninstallCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose output")
 	uninstallCmd.Flags().StringVarP(&path, "path", "p", "", "Set project path")
 	rootCmd.AddCommand(uninstallCmd)
 }

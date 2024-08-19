@@ -20,7 +20,7 @@ var initCmd = &cobra.Command{
 	Args:  cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		// Change working directory if path is set
-		if err := changeDirectory(); err != nil {
+		if err := utils.ChangeDirectory(path); err != nil {
 			exitWithError(err)
 		}
 
@@ -38,9 +38,6 @@ var initCmd = &cobra.Command{
 				projectName = responses[0]
 			}
 			des, author = responses[1], responses[2]
-			if verbose {
-				fmt.Printf("Project Name: %s\nDescription: %s\nAuthor: %s\n", projectName, des, author)
-			}
 			licenses := []utils.Item{
 				{TitleText: "MIT License", Desc: "A permissive license that is short and to the point."},
 				{TitleText: "Apache License 2.0", Desc: "A license that allows you to do almost anything with the project."},
@@ -51,9 +48,6 @@ var initCmd = &cobra.Command{
 			if err != nil {
 				fmt.Printf("Error: %v\n", err)
 				os.Exit(1)
-			}
-			if verbose {
-				fmt.Printf("Selected License: %s\n", license)
 			}
 		} else {
 			if useCurrentDir {
@@ -69,9 +63,6 @@ var initCmd = &cobra.Command{
 		if err != nil {
 			fmt.Printf("Error: %v\n", err)
 			os.Exit(1)
-		}
-		if verbose {
-			fmt.Printf("Created project directory: %s\n", dir)
 		}
 		if !uninteractive {
 			updates := []utils.UpdatePath{
@@ -100,7 +91,6 @@ var initCmd = &cobra.Command{
 func init() {
 	initCmd.Flags().BoolVarP(&useCurrentDir, "current", "c", false, "Use current directory as project directory")
 	initCmd.Flags().BoolVarP(&uninteractive, "uninteractive", "i", false, "Use uninteractive mode")
-	initCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose output")
 	initCmd.Flags().StringVarP(&path, "path", "p", "", "Set project path")
 	rootCmd.AddCommand(initCmd)
 }

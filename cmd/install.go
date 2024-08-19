@@ -7,7 +7,6 @@ import (
 	"strings"
 	"sync"
 
-	"nep/configs"
 	"nep/utils"
 
 	"github.com/go-git/go-git/v5"
@@ -24,43 +23,12 @@ var installCmd = &cobra.Command{
 	Aliases: []string{"i"},
 	Short:   "Install packages",
 	Run: func(cmd *cobra.Command, args []string) {
-		if err := changeDirectory(); err != nil {
-			exitWithError(err)
-		}
 
-		projectPath, err := utils.FindProjectDir()
+		projectPath := utils.Prepare(true, path)
 
-		if projectPath == "" {
-			fmt.Println("Not a nep project")
-			utils.CreateProject(configs.DefaultName, true)
-			fmt.Println("Project initialized in current directory")
-			projectPath, err = os.Getwd()
-			if err != nil {
-				fmt.Println("Error getting current directory:", err)
-				os.Exit(1)
-			}
-		} else if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-
-		// Ensure FolderName exists within the project directory
-		folderPath := filepath.Join(projectPath, configs.FolderName)
-		if _, err := os.Stat(folderPath); os.IsNotExist(err) {
-			if err := os.Mkdir(folderPath, 0755); err != nil {
-				fmt.Printf("Failed to create directory %s: %s\n", folderPath, err)
-				os.Exit(1)
-			}
-		} else if err != nil {
-			fmt.Printf("Error checking directory %s: %s\n", folderPath, err)
-			os.Exit(1)
-		}
+		folderPath := utils.GetFolder(projectPath)
 
 		if len(args) == 0 {
-			if verbose {
-				fmt.Println("No arguments provided, checking dependencies...")
-			}
-
 			// Use ReadConfig to get the dependencies
 			results, err := utils.ReadConfig(projectPath, [][]string{{"dependencies"}})
 			if err != nil {
@@ -69,9 +37,6 @@ var installCmd = &cobra.Command{
 			}
 
 			if len(results) == 0 || results[0] == nil {
-				if verbose {
-					fmt.Println("No dependencies found in config")
-				}
 				return
 			}
 
@@ -82,10 +47,6 @@ var installCmd = &cobra.Command{
 				os.Exit(1)
 			}
 
-			if verbose {
-				fmt.Printf("Dependencies found in config: %v\n", dependenciesInterface)
-			}
-
 			// Convert to args format
 			for pkg, version := range dependenciesInterface {
 				versionStr, ok := version.(string)
@@ -93,17 +54,10 @@ var installCmd = &cobra.Command{
 					fmt.Printf("Warning: Invalid version format for dependency %s: %v\n", pkg, version)
 					continue
 				}
-				// Remove 'v' prefix if it exists
+
 				versionStr = strings.TrimPrefix(versionStr, "v")
 				newArg := fmt.Sprintf("%s::%s", pkg, versionStr)
 				args = append(args, newArg)
-				if verbose {
-					fmt.Printf("Added dependency to install: %s\n", newArg)
-				}
-			}
-
-			if verbose {
-				fmt.Printf("Dependencies to install: %v\n", args)
 			}
 
 			if len(args) == 0 {
@@ -156,10 +110,6 @@ func installPackage(pkg, projectPath, folderPath string) {
 		URL:      responseData.Data.GithubURL,
 		Progress: os.Stdout,
 	}
-	if !verbose {
-		options.Progress = nil
-	}
-
 	_, err = git.PlainClone(packageDir, false, options)
 	if err != nil {
 		fmt.Printf("Failed to clone %s: %s\n", pkg, err)
@@ -178,7 +128,6 @@ func installPackage(pkg, projectPath, folderPath string) {
 	if responseData.Key == "" {
 		name = packageName
 	} else {
-
 		name = responseData.Key
 	}
 
@@ -186,7 +135,6 @@ func installPackage(pkg, projectPath, folderPath string) {
 		{Path: []string{"dependencies", name}, Value: responseData.Data.Version},
 	}
 
-	// Use mutex to lock access to the config file during updates
 	mu.Lock()
 	defer mu.Unlock()
 
@@ -197,7 +145,6 @@ func installPackage(pkg, projectPath, folderPath string) {
 }
 
 func init() {
-	installCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose output")
 	installCmd.Flags().BoolVarP(&asynchronous, "asynchronous", "a", false, "Install packages in parallel")
 	installCmd.Flags().StringVarP(&path, "path", "p", "", "Set project path")
 	rootCmd.AddCommand(installCmd)

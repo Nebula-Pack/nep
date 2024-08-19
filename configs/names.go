@@ -12,6 +12,7 @@ const (
 	ResponseFileName string = "nebula-config"
 	RemoveMarker     string = "__REMOVE__"
 	All              string = "*"
+	// add version seperator
 )
 
 //go:embed project_config.json

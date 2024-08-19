@@ -18,15 +18,7 @@ var updateCmd = &cobra.Command{
 	Short:   "update packages",
 	Run: func(cmd *cobra.Command, args []string) {
 
-		if err := changeDirectory(); err != nil {
-			exitWithError(err)
-		}
-
-		projectPath, err := utils.FindProjectDir()
-		if err != nil {
-			fmt.Printf("Error finding project directory: %v\n", err)
-			os.Exit(1)
-		}
+		projectPath := utils.Prepare(false, path)
 
 		cachePath := filepath.Join(projectPath, configs.CacheFolderName)
 		packagePath := filepath.Join(projectPath, configs.FolderName)
@@ -42,7 +34,7 @@ var updateCmd = &cobra.Command{
 			updateSpecificPackages(args, cachePath, packagePath)
 		}
 
-		if err = os.Remove(cachePath); err != nil {
+		if err := os.Remove(cachePath); err != nil {
 			fmt.Printf("Error removing cache folder: %v\n", err)
 		}
 
@@ -93,14 +85,11 @@ func updateSpecificPackages(packages []string, cachePath, packagePath string) {
 
 		if err := os.Rename(sourcePath, destPath); err != nil {
 			fmt.Printf("Error updating package %s: %v\n", pkg, err)
-		} else if verbose {
-			fmt.Printf("Updated package: %s\n", pkg)
 		}
 	}
 }
 
 func init() {
-	updateCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose output")
 	updateCmd.Flags().StringVarP(&path, "path", "p", "", "Set project path")
 	rootCmd.AddCommand(updateCmd)
 }

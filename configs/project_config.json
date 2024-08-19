@@ -1,10 +1,25 @@
 {
   "name": "Nebula-Pack-Project",
+
   "description": "The Best",
+
   "author": "Default Author",
+
   "version": "1.0.0",
+
   "license": "MIT",
+
+  "main": "main.lua",
+
   "dependencies": {},
-  "scripts": {},
-  "main": "main.lua"
+
+  "devDependencies": {},
+
+  "scripts": {
+    "test": "print('hello world')"
+  },
+
+  "compile args": {
+    "seed": "compile/seed_decoder.exe"
+  }
 }

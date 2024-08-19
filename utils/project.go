@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"log"
 	"nep/configs"
 	"os"
 	"path/filepath"
@@ -177,4 +178,61 @@ func nestedRead(config map[string]interface{}, keys []string) (interface{}, erro
 	}
 
 	return current, nil
+}
+
+func ChangeDirectory(path string) error {
+	if path != "" {
+		if err := os.Chdir(path); err != nil {
+			return fmt.Errorf("error changing directory: %v", err)
+		}
+	}
+	return nil
+}
+
+func Prepare(create bool, path string) (projectPath string) {
+
+	// Change to the specified directory
+	if err := ChangeDirectory(path); err != nil {
+		log.Fatal(err)
+	}
+
+	// Find the project directory
+	var err error
+	projectPath, err = FindProjectDir()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if projectPath == "" {
+		if !create {
+			log.Fatal("Not a nep project")
+		}
+		fmt.Println("Not a nep project\nInitializing project...")
+		CreateProject(configs.DefaultName, true)
+		fmt.Println("Project initialized in current directory")
+
+		// Get the current directory after creating the project
+		projectPath, err = os.Getwd()
+		if err != nil {
+			log.Fatal("Error getting current directory:", err)
+		}
+	}
+
+	return
+}
+
+func GetFolder(projectPath string) string {
+
+	folderPath := filepath.Join(projectPath, configs.FolderName)
+	if _, err := os.Stat(folderPath); os.IsNotExist(err) {
+		if err := os.Mkdir(folderPath, 0755); err != nil {
+			fmt.Printf("Failed to create directory %s: %s\n", folderPath, err)
+			os.Exit(1)
+		}
+	} else if err != nil {
+		fmt.Printf("Error checking directory %s: %s\n", folderPath, err)
+		os.Exit(1)
+	}
+
+	return folderPath
 }

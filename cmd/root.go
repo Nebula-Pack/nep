@@ -2,31 +2,52 @@ package cmd
 
 import (
 	"fmt"
+	"nep/utils"
 	"os"
 
 	"github.com/spf13/cobra"
+	lua "github.com/yuin/gopher-lua"
 )
+
+type Scripts map[string]string
 
 var (
-	verbose bool
 	path    string
+	scripts Scripts
 )
 
-func changeDirectory() error {
-	if path != "" {
-		if err := os.Chdir(path); err != nil {
-			return fmt.Errorf("error changing directory: %v", err)
-		}
-		if verbose {
-			fmt.Printf("Changed working directory to: %s\n", path)
-		}
+func loadScripts() error {
+	projectPath := utils.Prepare(true, path)
+
+	// Read the configuration section for "scripts"
+	results, err := utils.ReadConfig(projectPath, [][]string{{"scripts"}})
+	if err != nil {
+		return err
 	}
+
+	// Ensure results is in the expected format
+	rawScripts, ok := results[0].(map[string]interface{})
+	if !ok {
+		return fmt.Errorf("scripts configuration is not in the expected format")
+	}
+
+	// Initialize the scripts map
+	scripts = make(map[string]string)
+
+	// Convert rawScripts to map[string]string manually
+	for key, value := range rawScripts {
+		strValue, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("script %s is not a string", key)
+		}
+		scripts[key] = strValue
+	}
+
 	return nil
 }
 
-// rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:     "nep",
+	Use:     "nep [script]",
 	Version: "0.1.0",
 	Short:   "Nebula Pack - A package manager for Lua and LÖVE2D projects",
 	Long: `Nebula Pack (nep) is a specialized package manager designed to simplify 
@@ -43,13 +64,33 @@ Key features:
 
 Nebula Pack is ideal for developers who want to focus on creating Lua applications 
 without the hassle of manual library setup.`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
+	Args: cobra.MaximumNArgs(1), // Ensures only one argument is allowed
+	Run: func(cmd *cobra.Command, args []string) {
+		if err := loadScripts(); err != nil {
+			fmt.Println("Error loading scripts:", err)
+			os.Exit(1)
+		}
+
+		if len(args) > 0 {
+			scriptName := args[0]
+			luaScript, exists := scripts[scriptName]
+			if !exists {
+				fmt.Printf("script %s not found\n", scriptName)
+				return
+			}
+
+			L := lua.NewState()
+			defer L.Close()
+
+			if err := L.DoString(luaScript); err != nil {
+				fmt.Printf("Error running Lua script %s: %v\n", scriptName, err)
+			}
+		} else {
+			fmt.Println("No script name provided.")
+		}
+	},
 }
 
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
@@ -58,14 +99,5 @@ func Execute() {
 }
 
 func init() {
-	// Define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
-	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Show additional information")
 	rootCmd.PersistentFlags().StringVarP(&path, "path", "p", "", "Set project path")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	//rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

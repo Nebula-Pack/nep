@@ -14,15 +14,7 @@ var listCmd = &cobra.Command{
 	Short:   "List packages",
 	Run: func(cmd *cobra.Command, args []string) {
 		// Change working directory if path is set
-		if err := changeDirectory(); err != nil {
-			exitWithError(err)
-		}
-
-		projectPath, err := utils.FindProjectDir()
-		if err != nil {
-			fmt.Printf("Error finding project directory: %v\n", err)
-			os.Exit(1)
-		}
+		projectPath := utils.Prepare(false, path)
 
 		keys := [][]string{
 			{"dependencies"},
@@ -65,7 +57,6 @@ var listCmd = &cobra.Command{
 }
 
 func init() {
-	listCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose output")
 	listCmd.Flags().StringVarP(&path, "path", "p", "", "Set project path")
 	rootCmd.AddCommand(listCmd)
 }
